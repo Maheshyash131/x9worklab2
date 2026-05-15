@@ -34,7 +34,7 @@ export default function Earnings() {
           contentContainerStyle={{ paddingBottom: 110 }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ paddingHorizontal: 22, paddingTop: 16, paddingBottom: 22 }}>
+          <View style={{ paddingHorizontal: 22, paddingTop: 60, paddingBottom: 22 }}>
             <Text style={styles.h1}>Earnings</Text>
             <View style={styles.accent} />
             <Text style={styles.sub}>Your total earnings from approved referrals</Text>

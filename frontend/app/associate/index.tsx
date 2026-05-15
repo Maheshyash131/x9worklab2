@@ -93,7 +93,7 @@ export default function AssociateDashboard() {
 
             <Text style={styles.h1}>Dashboard</Text>
             <View style={styles.accent} />
-            <Text style={styles.sub}>Manage referrals, earnings and client activities</Text>
+            {/* <Text style={styles.sub}>Manage referrals, earnings and client activities</Text> */}
 
             {/* Earnings hero */}
             <View style={styles.hero}>

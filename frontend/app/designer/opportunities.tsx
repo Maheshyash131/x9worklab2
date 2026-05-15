@@ -34,7 +34,7 @@ export default function Opportunities() {
   return (
     <View style={{ flex: 1 }}>
       <DashboardBackground />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+      <SafeAreaView style={{ flex: 1, paddingTop:20 }} edges={["top"]}>
         <ScrollView refreshControl={<RefreshControl tintColor="#D88D07" refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
           <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }}>
             <Text style={styles.h1}>Opportunities</Text>

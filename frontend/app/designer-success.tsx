@@ -1,119 +1,337 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StatusBar,
+  SafeAreaView,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import {
+  ArrowLeft,
   ShieldCheck,
-  Hourglass,
+  HourglassMedium,
+  IdentificationCard,
+  Crown,
+  CheckCircle,
   UserCircle,
   Monitor,
   Bell,
-  IdentificationBadge,
-  Crown,
-  CheckCircle,
-  ArrowRight,
+  SquaresFour,
   Headset,
-  ArrowLeft,
-  Lock,
+  ArrowRight,
 } from "phosphor-react-native";
-import XNineBackground from "../components/XNineBackground";
+
+import DashboardBackground from "../components/DashboardBackground";
+import { api } from "../lib/api";
 
 export default function DesignerSuccess() {
-  const { plan } = useLocalSearchParams<{ plan: string }>();
-  const planLabel = (plan as string) === "basic" ? "Basic Plan" : "Premium Plan";
-  const regId = `XN-DP-${Math.floor(1000 + Math.random() * 9000)}`;
+  const [busy, setBusy] = useState(true);
+  const [me, setMe] = useState<any>(null);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const load = async () => {
+    try {
+      const data = await api("/auth/me");
+      setMe(data);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const registrationId = me?.user_id
+    ? `XN-DP-${String(me.user_id).slice(-4).toUpperCase()}`
+    : "XN-DP-2048";
+
+  const selectedPlan =
+    me?.plan === "basic" ? "Basic Plan" : "Premium Plan";
+
+  const paymentStatus = me?.payment_completed
+    ? "Successful"
+    : "Pending";
+
+  if (busy) {
+    return (
+      <View style={{ flex: 1 }}>
+        <DashboardBackground />
+        <SafeAreaView
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="large" color="#D88D07" />
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
-      <XNineBackground />
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <StatusBar barStyle="dark-content" />
-        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <View style={{ paddingHorizontal: 22, paddingTop: 4 }}>
-            <View style={styles.topRow}>
-              <TouchableOpacity onPress={() => router.replace("/designer")} style={styles.backBtn}>
+      <DashboardBackground />
+
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <View style={styles.container}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => router.back()}
+              >
                 <ArrowLeft size={22} color="#D88D07" />
               </TouchableOpacity>
-              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#FFFDF8", alignItems: "center", justifyContent: "center" }}>
-                <ShieldCheck size={22} color="#D88D07" weight="fill" />
+
+              <View style={styles.iconBtn}>
+                <ShieldCheck size={20} color="#D88D07" />
               </View>
             </View>
 
-            {/* Trophy */}
-            <View style={styles.trophyWrap}>
-              <View style={styles.trophyGlow} />
-              <LinearGradient colors={["#F6B341", "#B57B10"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.trophyBadge}>
-                <ShieldCheck size={64} color="#fff" weight="fill" />
-              </LinearGradient>
+            <View style={styles.heroShield}>
+              <ShieldCheck
+                size={78}
+                color="#D88D07"
+                weight="fill"
+              />
             </View>
 
-            <View style={{ alignItems: "center" }}>
-              <Text style={styles.title}>
-                Registration <Text style={{ color: "#D88D07" }}>Successful</Text>
-              </Text>
-              <Text style={styles.subtitle}>Your onboarding request has been successfully submitted.</Text>
-            </View>
+            <Text style={styles.successTitle}>
+              Registration{" "}
+              <Text style={{ color: "#D88D07" }}>Successful</Text>
+            </Text>
 
-            {/* Status */}
+            <Text style={styles.subtitle}>
+              Your onboarding request has been successfully submitted.
+            </Text>
+
             <View style={styles.statusCard}>
-              <View style={styles.hourIcon}>
-                <Hourglass size={28} color="#D88D07" weight="fill" />
+              <View style={styles.statusIcon}>
+                <HourglassMedium
+                  size={28}
+                  color="#D88D07"
+                  weight="fill"
+                />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.statusLabel}>Current Status</Text>
-                <Text style={styles.statusValue}>Verification in Progress</Text>
-                <Text style={styles.statusSub}>Our team is setting up your Designer Portal access.</Text>
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.smallLabel}>
+                  Current Status
+                </Text>
+
+                <Text style={styles.statusTitle}>
+                  Verification in Progress
+                </Text>
+
+                <Text style={styles.statusSub}>
+                  Our team is setting up your Designer Portal access.
+                </Text>
+              </View>
+
+              <View style={styles.statusRight}>
+                <IdentificationCard
+                  size={38}
+                  color="#D88D07"
+                />
               </View>
             </View>
 
-            <Text style={styles.sectionTitle}>What happens next?</Text>
-            <View style={styles.stepsCard}>
-              <Step n={1} icon={<UserCircle size={22} color="#D88D07" weight="fill" />} title="Profile Verification" sub="Your submitted details are being verified." />
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>
+                What happens next?
+              </Text>
+
+              <View style={styles.stepRow}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>1</Text>
+                </View>
+
+                <View style={styles.stepIcon}>
+                  <UserCircle size={20} color="#D88D07" />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.stepTitle}>
+                    Profile Verification
+                  </Text>
+                  <Text style={styles.stepSub}>
+                    Your submitted details are being verified.
+                  </Text>
+                </View>
+              </View>
+
               <View style={styles.stepDivider} />
-              <Step n={2} icon={<Monitor size={22} color="#D88D07" weight="fill" />} title="Portal Activation" sub="Your Designer Portal access will be enabled after verification." />
+
+              <View style={styles.stepRow}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>2</Text>
+                </View>
+
+                <View style={styles.stepIcon}>
+                  <Monitor size={20} color="#D88D07" />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.stepTitle}>
+                    Portal Activation
+                  </Text>
+                  <Text style={styles.stepSub}>
+                    Your Designer Portal access will be enabled after
+                    verification.
+                  </Text>
+                </View>
+              </View>
+
               <View style={styles.stepDivider} />
-              <Step n={3} icon={<Bell size={22} color="#D88D07" weight="fill" />} title="Confirmation Update" sub="You'll receive status updates through your registered contact details." />
+
+              <View style={styles.stepRow}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>3</Text>
+                </View>
+
+                <View style={styles.stepIcon}>
+                  <Bell size={20} color="#D88D07" />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.stepTitle}>
+                    Confirmation Update
+                  </Text>
+                  <Text style={styles.stepSub}>
+                    You'll receive updates through your registered
+                    contact details.
+                  </Text>
+                </View>
+              </View>
+            </View>
+                        <View style={styles.refCard}>
+              <Text style={styles.cardTitle}>Reference Details</Text>
+
+              <View style={styles.refRow}>
+                <View style={styles.refItem}>
+                  <View style={styles.refIcon}>
+                    <IdentificationCard
+                      size={18}
+                      color="#D88D07"
+                    />
+                  </View>
+
+                  <View>
+                    <Text style={styles.refLabel}>
+                      Registration ID
+                    </Text>
+                    <Text style={styles.refValue}>
+                      {registrationId}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.refDivider} />
+
+                <View style={styles.refItem}>
+                  <View style={styles.refIcon}>
+                    <Crown size={18} color="#D88D07" />
+                  </View>
+
+                  <View>
+                    <Text style={styles.refLabel}>
+                      Selected Plan
+                    </Text>
+                    <Text style={styles.refValue}>
+                      {selectedPlan}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.refDivider} />
+
+                <View style={styles.refItem}>
+                  <View
+                    style={[
+                      styles.refIcon,
+                      { backgroundColor: "#EAF8E1" },
+                    ]}
+                  >
+                    <CheckCircle
+                      size={18}
+                      color="#3F9B2E"
+                      weight="fill"
+                    />
+                  </View>
+
+                  <View>
+                    <Text style={styles.refLabel}>
+                      Payment Status
+                    </Text>
+                    <Text
+                      style={[
+                        styles.refValue,
+                        { color: "#3F9B2E" },
+                      ]}
+                    >
+                      {paymentStatus}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Reference Details</Text>
-            <View style={styles.refCard}>
-              <RefItem icon={<IdentificationBadge size={20} color="#D88D07" />} label="Registration ID" value={regId} />
-              <View style={styles.refSep} />
-              <RefItem icon={<Crown size={20} color="#D88D07" weight="fill" />} label="Selected Plan" value={planLabel} />
-              <View style={styles.refSep} />
-              <RefItem icon={<CheckCircle size={20} color="#3F9B2E" weight="fill" />} label="Payment Status" value="Successful" valueColor="#3F9B2E" />
-            </View>
-
-            <TouchableOpacity testID="go-dashboard" activeOpacity={0.9} onPress={() => router.replace("/designer")} style={styles.primary}>
-              <LinearGradient colors={["#FFB931", "#E19100"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryGrad}>
-                <Text style={styles.primaryText}>Go to Dashboard</Text>
-                <ArrowRight size={20} color="#fff" weight="bold" />
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => router.replace("/designer")}
+              style={styles.shadowBtn}
+            >
+              <LinearGradient
+                colors={["#FFB931", "#E19100"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.btnGrad}
+              >
+                <SquaresFour size={20} color="#fff" />
+                <Text style={styles.btnText}>
+                  Go to Dashboard
+                </Text>
+                <ArrowRight
+                  size={22}
+                  color="#fff"
+                  weight="bold"
+                />
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity testID="contact-support" activeOpacity={0.85} style={styles.support}>
-              <Headset size={20} color="#D88D07" weight="fill" />
-              <Text style={styles.supportText}>Contact Support</Text>
+            <TouchableOpacity
+              style={styles.supportBtn}
+              activeOpacity={0.9}
+            >
+              <Headset size={20} color="#D88D07" />
+              <Text style={styles.supportText}>
+                Contact Support
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <ShieldCheck size={14} color="#9A8E80" />
-                <Text style={styles.footerText}>Secure. Encrypted. Trusted.</Text>
-              </View>
-              <View style={styles.footerSep} />
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Lock size={14} color="#9A8E80" />
-                <Text style={styles.footerText}>Your data is safe with us.</Text>
-              </View>
+              <ShieldCheck size={14} color="#B57B10" />
+              <Text style={styles.footerText}>
+                Secure. Encrypted. Trusted.
+              </Text>
+
+              <ShieldCheck
+                size={14}
+                color="#B57B10"
+                style={{ marginLeft: 18 }}
+              />
+
+              <Text style={styles.footerText}>
+                Your data is safe with us.
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -122,62 +340,279 @@ export default function DesignerSuccess() {
   );
 }
 
-function Step({ n, icon, title, sub }: any) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", padding: 14 }}>
-      <View style={styles.stepNum}><Text style={styles.stepNumText}>{n}</Text></View>
-      <View style={styles.stepIcon}>{icon}</View>
-      <View style={{ flex: 1, marginLeft: 4 }}>
-        <Text style={styles.stepTitle}>{title}</Text>
-        <Text style={styles.stepSub}>{sub}</Text>
-      </View>
-    </View>
-  );
-}
-function RefItem({ icon, label, value, valueColor }: any) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", padding: 14 }}>
-      <View style={styles.refIcon}>{icon}</View>
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={styles.refLabel}>{label}</Text>
-        <Text style={[styles.refValue, valueColor && { color: valueColor }]}>{value}</Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  backBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#FFFDF8", alignItems: "center", justifyContent: "center" },
-  trophyWrap: { alignItems: "center", marginTop: 18, marginBottom: 18 },
-  trophyGlow: { position: "absolute", width: 200, height: 200, borderRadius: 100, backgroundColor: "#FFF1DA", opacity: 0.7 },
-  trophyBadge: { width: 120, height: 120, borderRadius: 32, alignItems: "center", justifyContent: "center", shadowColor: "#D88D07", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 8 },
-  title: { fontSize: 28, fontWeight: "800", color: "#1B1B1B", textAlign: "center" },
-  subtitle: { fontSize: 13, color: "#7A7167", textAlign: "center", marginTop: 8, paddingHorizontal: 20 },
-  statusCard: { backgroundColor: "#FFF6E5", borderRadius: 18, padding: 16, marginTop: 22, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#F1DFB6" },
-  hourIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#FFF1DA", alignItems: "center", justifyContent: "center" },
-  statusLabel: { color: "#9A8E80", fontSize: 11, fontWeight: "700" },
-  statusValue: { color: "#D88D07", fontSize: 17, fontWeight: "800", marginTop: 2 },
-  statusSub: { color: "#5B5249", fontSize: 11, marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#1B1B1B", marginTop: 22, marginBottom: 10 },
-  stepsCard: { backgroundColor: "#FFFDF8", borderRadius: 18, paddingVertical: 6 },
-  stepNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#FFF1DA", alignItems: "center", justifyContent: "center", marginRight: 12 },
-  stepNumText: { color: "#D88D07", fontWeight: "800", fontSize: 13 },
-  stepIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#FFF1DA", alignItems: "center", justifyContent: "center", marginRight: 10 },
-  stepTitle: { fontSize: 13, fontWeight: "800", color: "#1B1B1B" },
-  stepSub: { color: "#7A7167", fontSize: 11, marginTop: 2 },
-  stepDivider: { height: 1, backgroundColor: "#F0E4CC", marginLeft: 54 },
-  refCard: { backgroundColor: "#FFFDF8", borderRadius: 18 },
-  refIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#FFF1DA", alignItems: "center", justifyContent: "center" },
-  refLabel: { color: "#9A8E80", fontSize: 11, fontWeight: "700" },
-  refValue: { color: "#1B1B1B", fontSize: 14, fontWeight: "800", marginTop: 2 },
-  refSep: { height: 1, backgroundColor: "#F0E4CC", marginLeft: 54 },
-  primary: { marginTop: 22, borderRadius: 999, overflow: "hidden", shadowColor: "#D88D07", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 5 },
-  primaryGrad: { paddingVertical: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  primaryText: { color: "#fff", fontSize: 17, fontWeight: "800", marginRight: 8 },
-  support: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 999, borderWidth: 1.5, borderColor: "#D88D07", marginTop: 12, backgroundColor: "#FFFDF8" },
-  supportText: { color: "#D88D07", fontWeight: "800", fontSize: 15, marginLeft: 6 },
-  footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 18, gap: 10 },
-  footerSep: { width: 1, height: 14, backgroundColor: "#D9CFBE" },
-  footerText: { color: "#9A8E80", fontSize: 11, marginLeft: 6 },
+  container: {
+    paddingHorizontal: 22,
+    paddingTop: 10,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  iconBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#FFFDF8",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#B89B63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+
+  heroShield: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    alignSelf: "center",
+    marginTop: 20,
+    backgroundColor: "rgba(255,241,218,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  successTitle: {
+    fontSize: 34,
+    fontWeight: "800",
+    textAlign: "center",
+    color: "#1B1B1B",
+    marginTop: 22,
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: "#6D655B",
+    textAlign: "center",
+    marginTop: 10,
+    lineHeight: 22,
+  },
+
+  statusCard: {
+    marginTop: 22,
+    backgroundColor: "rgba(255,253,248,0.95)",
+    borderRadius: 22,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#B89B63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  statusIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#FFF1DA",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+
+  statusRight: {
+    width: 60,
+    alignItems: "center",
+  },
+
+  smallLabel: {
+    fontSize: 12,
+    color: "#7B7267",
+  },
+
+  statusTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#D88D07",
+    marginTop: 4,
+  },
+
+  statusSub: {
+    fontSize: 12,
+    color: "#6D655B",
+    lineHeight: 18,
+    marginTop: 6,
+  },
+
+  card: {
+    marginTop: 18,
+    backgroundColor: "rgba(255,253,248,0.95)",
+    borderRadius: 22,
+    padding: 18,
+    shadowColor: "#B89B63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1B1B1B",
+    marginBottom: 14,
+  },
+
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  stepNum: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#FFF1DA",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  stepNumText: {
+    color: "#D88D07",
+    fontWeight: "800",
+  },
+
+  stepIcon: {
+    width: 42,
+    alignItems: "center",
+  },
+
+  stepTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1B1B1B",
+  },
+
+  stepSub: {
+    fontSize: 12,
+    color: "#6D655B",
+    lineHeight: 18,
+    marginTop: 4,
+  },
+
+  stepDivider: {
+    height: 1,
+    backgroundColor: "#F0E4CC",
+    marginVertical: 16,
+  },
+
+  refCard: {
+    marginTop: 18,
+    backgroundColor: "rgba(255,253,248,0.95)",
+    borderRadius: 22,
+    padding: 18,
+    shadowColor: "#B89B63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  refRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  refItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  refIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FFF1DA",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+
+  refDivider: {
+    width: 1,
+    height: 80,
+    backgroundColor: "#E7D8BF",
+    marginHorizontal: 8,
+  },
+
+  refLabel: {
+    fontSize: 11,
+    color: "#7B7267",
+    textAlign: "center",
+  },
+
+  refValue: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1B1B1B",
+    textAlign: "center",
+    marginTop: 4,
+  },
+
+  shadowBtn: {
+    marginTop: 20,
+    borderRadius: 999,
+    overflow: "hidden",
+    shadowColor: "#D88D07",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+
+  btnGrad: {
+    paddingVertical: 18,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  btnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "800",
+  },
+
+  supportBtn: {
+    marginTop: 14,
+    borderWidth: 1.5,
+    borderColor: "#D88D07",
+    borderRadius: 999,
+    paddingVertical: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,253,248,0.9)",
+  },
+
+  supportText: {
+    marginLeft: 10,
+    color: "#1B1B1B",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginTop: 18,
+    marginBottom: 20,
+  },
+
+  footerText: {
+    marginLeft: 6,
+    color: "#6D655B",
+    fontSize: 11,
+  },
 });

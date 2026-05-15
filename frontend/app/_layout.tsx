@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import "react-native-url-polyfill/auto";
 
+
 const tokenCache = {
   async getToken(key: string) {
     try {

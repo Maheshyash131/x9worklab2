@@ -58,7 +58,7 @@ export default function Referrals() {
           contentContainerStyle={{ paddingBottom: 110 }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={{ paddingHorizontal: 22, paddingTop: 16, paddingBottom: 22 }}>
+          <View style={{ paddingHorizontal: 22, paddingTop: 60, paddingBottom: 22 }}>
             <Text style={styles.h1}>Referral Status</Text>
             <View style={styles.accent} />
             <Text style={styles.sub}>Track every client you’ve referred</Text>

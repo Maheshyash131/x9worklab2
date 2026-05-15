@@ -133,7 +133,7 @@ export default function DesignerDashboard() {
             {/* Active Projects */}
             <View style={[styles.row, { justifyContent: "space-between", marginTop: 22, marginBottom: 8 }] }>
               <Text style={styles.sectionTitle}>Active Projects</Text>
-              <TouchableOpacity onPress={() => router.push("/designer/projects")} style={styles.row}>
+              <TouchableOpacity onPress={() => router.push("/designer/opportunities")} style={styles.row}>
                 <Text style={{ color: "#D88D07", fontWeight: "700", fontSize: 13 }}>View all</Text>
                 <ArrowRight size={14} color="#D88D07" weight="bold" style={{ marginLeft: 4 }} />
               </TouchableOpacity>
