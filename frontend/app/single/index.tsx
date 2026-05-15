@@ -34,16 +34,22 @@ export default function ClientDashboard() {
   const [modalVisible, setModalVisible] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const [form, setForm] = useState({
-    full_name: "",
-    phone: "",
-    email: "",
-    project_type: "",
-    bhk: "",
-    location: "",
-    budget: "",
-    requirements: "",
-  });
+const [form, setForm] = useState({
+  full_name: "",
+  phone: "",
+  email: "",
+  occupation: "",
+  company: "",
+  pan: "",
+  project_type: "",
+  bhk: "",
+  property_type: "",
+  location: "",
+  budget: "",
+  preferred_style: "",
+  timeline: "",
+  requirements: "",
+});
 
   const load = useCallback(async () => {
     try {
@@ -57,13 +63,16 @@ export default function ClientDashboard() {
       setMe(user);
       setDesigners(list);
 
-      setForm((prev) => ({
-        ...prev,
-        full_name: user?.name || "",
-        phone: user?.phone || "",
-        email: user?.email || "",
-        location: user?.location || "",
-      }));
+    setForm((prev) => ({
+  ...prev,
+  full_name: user?.name || "",
+  phone: user?.phone || "",
+  email: user?.email || "",
+  location: user?.location || "",
+  occupation: user?.occupation || "",
+  company: user?.company || "",
+  pan: user?.pan || "",
+}));
     } catch (e) {
       console.log(e);
     } finally {
@@ -99,6 +108,21 @@ export default function ClientDashboard() {
       Alert.alert("Required", "Enter project type");
       return;
     }
+
+    if (!form.email.trim()) {
+  Alert.alert("Required", "Enter email");
+  return;
+}
+
+if (!form.location.trim()) {
+  Alert.alert("Required", "Enter location");
+  return;
+}
+
+if (!form.budget.trim()) {
+  Alert.alert("Required", "Enter budget");
+  return;
+}
 
     try {
       setSending(true);
@@ -350,92 +374,117 @@ export default function ClientDashboard() {
                   </View>
 
                   <InputField
-                    placeholder="Full Name"
-                    value={form.full_name}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        full_name: t,
-                      })
-                    }
-                  />
+  placeholder="Full Name"
+  value={form.full_name}
+  onChange={(t) =>
+    setForm({ ...form, full_name: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="Phone"
-                    value={form.phone}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        phone: t,
-                      })
-                    }
-                  />
+<InputField
+  placeholder="Phone Number"
+  value={form.phone}
+  onChange={(t) =>
+    setForm({ ...form, phone: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="Email"
-                    value={form.email}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        email: t,
-                      })
-                    }
-                  />
+<InputField
+  placeholder="Email Address"
+  value={form.email}
+  onChange={(t) =>
+    setForm({ ...form, email: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="Project Type"
-                    value={form.project_type}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        project_type: t,
-                      })
-                    }
-                  />
+<InputField
+  placeholder="Occupation"
+  value={form.occupation}
+  onChange={(t) =>
+    setForm({ ...form, occupation: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="BHK"
-                    value={form.bhk}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        bhk: t,
-                      })
-                    }
-                  />
-                                    <InputField
-                    placeholder="Location"
-                    value={form.location}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        location: t,
-                      })
-                    }
-                  />
+<InputField
+  placeholder="Company Name"
+  value={form.company}
+  onChange={(t) =>
+    setForm({ ...form, company: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="Budget"
-                    value={form.budget}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        budget: t,
-                      })
-                    }
-                  />
+<InputField
+  placeholder="PAN Number"
+  value={form.pan}
+  onChange={(t) =>
+    setForm({ ...form, pan: t })
+  }
+/>
 
-                  <InputField
-                    placeholder="Requirements"
-                    value={form.requirements}
-                    onChange={(t) =>
-                      setForm({
-                        ...form,
-                        requirements: t,
-                      })
-                    }
-                    multiline
-                  />
+<InputField
+  placeholder="Project Type"
+  value={form.project_type}
+  onChange={(t) =>
+    setForm({ ...form, project_type: t })
+  }
+/>
+
+<InputField
+  placeholder="BHK"
+  value={form.bhk}
+  onChange={(t) =>
+    setForm({ ...form, bhk: t })
+  }
+/>
+
+<InputField
+  placeholder="Property Type (Apartment/Villa/etc)"
+  value={form.property_type}
+  onChange={(t) =>
+    setForm({ ...form, property_type: t })
+  }
+/>
+
+<InputField
+  placeholder="Location"
+  value={form.location}
+  onChange={(t) =>
+    setForm({ ...form, location: t })
+  }
+/>
+
+<InputField
+  placeholder="Budget"
+  value={form.budget}
+  onChange={(t) =>
+    setForm({ ...form, budget: t })
+  }
+/>
+
+<InputField
+  placeholder="Preferred Design Style"
+  value={form.preferred_style}
+  onChange={(t) =>
+    setForm({ ...form, preferred_style: t })
+  }
+/>
+
+<InputField
+  placeholder="Expected Timeline"
+  value={form.timeline}
+  onChange={(t) =>
+    setForm({ ...form, timeline: t })
+  }
+/>
+
+<InputField
+  placeholder="Detailed Requirements"
+  value={form.requirements}
+  onChange={(t) =>
+    setForm({ ...form, requirements: t })
+  }
+  multiline
+/>  
 
                   <TouchableOpacity
                     style={styles.submitBtn}

@@ -82,10 +82,14 @@ const handleGoogle = async () => {
     } else if (u.role === "designer") {
       if (!u.plan) router.replace("/designer-welcome");
       else router.replace("/designer");
-    } else if (u.role === "client") {
-      if (!u.plan) router.replace("/karmic-payment");
-      else router.replace("/single");
     }
+    else if (u.role === "client") {
+  if (res.is_new_user) {
+    router.replace("/karmic-payment");
+  } else {
+    router.replace("/single");
+  }
+}
 
   } catch (e: any) {
     Alert.alert("Login failed", e?.message || "Try again");
