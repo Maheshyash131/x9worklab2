@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Modal,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,9 +23,13 @@ import {
   NotePencil,
   Plus,
   DotsThreeVertical,
+  Phone,
+  X,
+  Lock,
 } from "phosphor-react-native";
 
 import DashboardBackground from "../../components/DashboardBackground";
+import { api } from "../../lib/api";
 
 function StageBadge({
   text,
@@ -45,7 +52,7 @@ function StageBadge({
 export default function ProjectWorkspace() {
   const params = useLocalSearchParams();
 
-  const project = useMemo(() => {
+  const baseProject = useMemo(() => {
     try {
       return params.project
         ? JSON.parse(params.project as string)
@@ -54,6 +61,10 @@ export default function ProjectWorkspace() {
       return null;
     }
   }, [params.project]);
+
+  const [project, setProject] = useState(baseProject);
+  const [unlockVisible, setUnlockVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const image = (params.image as string) || "";
 
@@ -73,6 +84,48 @@ export default function ProjectWorkspace() {
       </View>
     );
   }
+
+ const unlockContact = async () => {
+  try {
+    setBusy(true);
+
+    await api("/designer/unlock-contact", {
+      method: "POST",
+      body: JSON.stringify({
+        referral_id: project.referral_id,
+      }),
+    });
+
+    const refreshed = await api("/designer/feed");
+
+    const allProjects = [
+      ...(refreshed.referrals || []),
+      ...(refreshed.consultations || []),
+    ];
+
+    const updatedProject = allProjects.find(
+      (item) => item.referral_id === project.referral_id
+    );
+
+    if (updatedProject) {
+      setProject(updatedProject);
+    }
+
+    setUnlockVisible(false);
+
+    Alert.alert(
+      "Payment Successful",
+      "Client phone number unlocked successfully."
+    );
+  } catch (e: any) {
+    Alert.alert(
+      "Error",
+      e?.message || "Payment failed"
+    );
+  } finally {
+    setBusy(false);
+  }
+};
 
   const acceptedDate = project.created_at
     ? new Date(project.created_at).toLocaleDateString("en-IN")
@@ -109,35 +162,54 @@ export default function ProjectWorkspace() {
       color: "#D88D07",
       bg: "#FFF3D9",
     },
-    {
-      no: 3,
-      title: "Design Planning",
-      sub: "Awaiting planning stage.",
-      status: "Pending",
-      color: "#D88D07",
-      bg: "#FFF3D9",
-    },
-    {
-      no: 4,
-      title: "Execution",
-      sub: "Execution not started.",
-      status: "Pending",
-      color: "#D88D07",
-      bg: "#FFF3D9",
-    },
-    {
-      no: 5,
-      title: "Final Delivery",
-      sub: "Final handover pending.",
-      status: "Pending",
-      color: "#D88D07",
-      bg: "#FFF3D9",
-    },
   ];
 
   return (
     <View style={{ flex: 1 }}>
       <DashboardBackground />
+
+      <Modal
+        transparent
+        visible={unlockVisible}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <TouchableOpacity
+              onPress={() => setUnlockVisible(false)}
+              style={styles.closeBtn}
+            >
+              <X size={20} color="#1B1B1B" />
+            </TouchableOpacity>
+
+            <View style={styles.lockCircle}>
+              <Lock size={28} color="#D88D07" />
+            </View>
+
+            <Text style={styles.modalTitle}>
+              Unlock Client Contact
+            </Text>
+
+            <Text style={styles.modalSub}>
+              Pay ₹399 to reveal the client phone number.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.payBtn}
+              disabled={busy}
+              onPress={unlockContact}
+            >
+              {busy ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.payText}>
+                  Pay ₹399
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
@@ -162,10 +234,6 @@ export default function ProjectWorkspace() {
               Project Workspace
             </Text>
 
-            <Text style={styles.subHeading}>
-              Manage accepted project workflow
-            </Text>
-
             <View style={styles.heroCard}>
               <Image
                 source={{ uri: image }}
@@ -185,145 +253,24 @@ export default function ProjectWorkspace() {
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Buildings size={14} color="#1B1B1B" />
+                  <Phone size={14} color="#1B1B1B" />
                   <Text style={styles.infoText}>
-                    {project.bhk || "Interior"}
+                    {project.phone}
                   </Text>
                 </View>
 
-                <View style={styles.infoRow}>
-                  <MapPin size={14} color="#1B1B1B" />
-                  <Text style={styles.infoText}>
-                    {location}
-                  </Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <CalendarBlank
-                    size={14}
-                    color="#1B1B1B"
-                  />
-                  <Text style={styles.infoText}>
-                    Accepted: {acceptedDate}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.progressWrap}>
-                <Text style={styles.progressNum}>
-                  35%
-                </Text>
-                <Text style={styles.progressLbl}>
-                  Progress
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.stageCard}>
-              <View style={styles.stageHeader}>
-                <Text style={styles.sectionTitle}>
-                  Project Stages
-                </Text>
-
-                <TouchableOpacity style={styles.addBtn}>
-                  <Plus size={14} color="#D88D07" />
-                  <Text style={styles.addText}>
-                    Add Stage
-                  </Text>
-                </TouchableOpacity>
-              </View>
-                            {stages.map((stage) => (
-                <View key={stage.no}>
-                  <View style={styles.stageRow}>
-                    <View style={styles.stageNo}>
-                      <Text style={styles.stageNoText}>
-                        {stage.no}
-                      </Text>
-                    </View>
-
-                    <View style={{ flex: 1 }}>
-                      <View style={styles.stageTitleRow}>
-                        <Text style={styles.stageTitle}>
-                          {stage.title}
-                        </Text>
-
-                        <StageBadge
-                          text={stage.status}
-                          color={stage.color}
-                          bg={stage.bg}
-                        />
-                      </View>
-
-                      <Text style={styles.stageSub}>
-                        {stage.sub}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity>
-                      <DotsThreeVertical
-                        size={18}
-                        color="#6D655B"
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {stage.no !== stages.length && (
-                    <View style={styles.stageDivider} />
-                  )}
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.noteCard}>
-              <View style={styles.noteHeader}>
-                <View style={styles.noteTitleRow}>
-                  <NotePencil size={18} color="#D88D07" />
-                  <Text style={styles.sectionTitle}>
-                    Project Notes
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.noteText}>
-                Client accepted the opportunity.{"\n"}
-                Workspace initialized for execution tracking.
-              </Text>
-            </View>
-
-            <View style={styles.activityCard}>
-              <View style={styles.activityHeader}>
-                <View style={styles.noteTitleRow}>
-                  <Clock size={18} color="#D88D07" />
-                  <Text style={styles.sectionTitle}>
-                    Recent Activity
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.activityRow}>
-                <View style={styles.activityDot} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.activityTitle}>
-                    Opportunity accepted
-                  </Text>
-                  <Text style={styles.activitySub}>
-                    {acceptedDate}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.activityDivider} />
-
-              <View style={styles.activityRow}>
-                <View style={styles.activityDot} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.activityTitle}>
-                    Workspace created
-                  </Text>
-                  <Text style={styles.activitySub}>
-                    Tracking enabled
-                  </Text>
-                </View>
+                {!project.contact_unlocked && (
+                  <TouchableOpacity
+                    style={styles.unlockBtn}
+                    onPress={() =>
+                      setUnlockVisible(true)
+                    }
+                  >
+                    <Text style={styles.unlockText}>
+                      Unlock Contact ₹399
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
@@ -363,16 +310,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#1B1B1B",
     marginTop: 18,
-  },
-
-  subHeading: {
-    fontSize: 13,
-    color: "#7A7167",
-    marginTop: 6,
+    marginBottom: 18,
   },
 
   heroCard: {
-    marginTop: 18,
     backgroundColor: "#FFFDF8",
     borderRadius: 24,
     padding: 16,
@@ -395,6 +336,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     color: "#1B1B1B",
+    marginBottom: 6,
   },
 
   infoRow: {
@@ -405,114 +347,87 @@ const styles = StyleSheet.create({
 
   infoText: {
     marginLeft: 8,
-    fontSize: 12,
+    fontSize: 13,
     color: "#4F473E",
     flex: 1,
   },
 
-  progressWrap: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    borderWidth: 4,
-    borderColor: "#D88D07",
-    backgroundColor: "#FFF3D9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  progressNum: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#D88D07",
-  },
-
-  progressLbl: {
-    fontSize: 10,
-    color: "#7A7167",
-    marginTop: 2,
-  },
-
-  stageCard: {
-    marginTop: 18,
-    backgroundColor: "#FFFDF8",
-    borderRadius: 24,
-    padding: 16,
-    shadowColor: "#B89B63",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-
-  stageHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#1B1B1B",
-  },
-
-  addBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF3D9",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  unlockBtn: {
+    marginTop: 14,
+    backgroundColor: "#D88D07",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 999,
+    alignSelf: "flex-start",
   },
 
-  addText: {
-    marginLeft: 6,
-    color: "#D88D07",
-    fontWeight: "700",
+  unlockText: {
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 12,
   },
 
-  stageRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 14,
-  },
-
-  stageNo: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#FFF1DA",
-    alignItems: "center",
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
-    marginRight: 12,
+    alignItems: "center",
+    padding: 24,
   },
 
-  stageNoText: {
-    fontWeight: "800",
-    color: "#D88D07",
-  },
-
-  stageTitleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  modalCard: {
+    width: "100%",
+    backgroundColor: "#FFFDF8",
+    borderRadius: 28,
+    padding: 24,
     alignItems: "center",
   },
 
-  stageTitle: {
-    fontSize: 15,
+  closeBtn: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    zIndex: 10,
+  },
+
+  lockCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFF1DA",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+
+  modalTitle: {
+    fontSize: 20,
     fontWeight: "800",
     color: "#1B1B1B",
-    flex: 1,
+    marginTop: 18,
   },
 
-  stageSub: {
-    marginTop: 6,
-    fontSize: 12,
+  modalSub: {
+    textAlign: "center",
     color: "#6D655B",
-    lineHeight: 18,
+    marginTop: 10,
+    lineHeight: 22,
+  },
+
+  payBtn: {
+    marginTop: 22,
+    backgroundColor: "#D88D07",
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 999,
+    minWidth: 160,
+    alignItems: "center",
+  },
+
+  payText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 15,
   },
 
   badge: {
@@ -525,87 +440,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10,
     fontWeight: "700",
-  },
-
-  stageDivider: {
-    height: 1,
-    backgroundColor: "#F0E4CC",
-  },
-
-  noteCard: {
-    marginTop: 18,
-    backgroundColor: "#FFFDF8",
-    borderRadius: 24,
-    padding: 16,
-    shadowColor: "#B89B63",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-
-  noteHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  noteTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  noteText: {
-    marginTop: 14,
-    fontSize: 13,
-    color: "#4F473E",
-    lineHeight: 22,
-  },
-
-  activityCard: {
-    marginTop: 18,
-    backgroundColor: "#FFFDF8",
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: "#B89B63",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-
-  activityHeader: {
-    marginBottom: 12,
-  },
-
-  activityRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-
-  activityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "#D88D07",
-  },
-
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1B1B1B",
-  },
-
-  activitySub: {
-    marginTop: 4,
-    fontSize: 11,
-    color: "#6D655B",
-  },
-
-  activityDivider: {
-    height: 1,
-    backgroundColor: "#F0E4CC",
   },
 });

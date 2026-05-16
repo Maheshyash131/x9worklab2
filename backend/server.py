@@ -76,6 +76,8 @@ class DesignerConnectIn(BaseModel):
 
 class KarmicConsultationIn(BaseModel):
     dob: str
+    time_birth: str
+    place_birth: str
     full_name: str
     phone: str
     email: str
@@ -86,6 +88,9 @@ class KarmicConsultationIn(BaseModel):
 class ReferralActionIn(BaseModel):
     referral_id: str
     action: str  # "accept" | "reject"
+
+class UnlockContactIn(BaseModel):
+    referral_id: str
 
 class DesignerRegistrationIn(BaseModel):
     full_name: str
@@ -394,6 +399,8 @@ async def create_karmic_consultation(
         "consultation_fee": payload.consultation_fee,
         "status": "paid",
         "source": "karmic_consultation",
+        "time_birth": payload.time_birth,
+        "place_birth": payload.place_birth,
         "created_at": utcnow(),
     }
 
@@ -485,7 +492,7 @@ async def select_plan(
         raise HTTPException(status_code=400, detail="Invalid plan")
 
     onboarding_fee = 4999
-    plan_fee = 7999 if payload.plan == "basic" else 11999
+    plan_fee = 5999 if payload.plan == "basic" else 9999
     total_paid = onboarding_fee + plan_fee
     bonus = 5000 if payload.plan == "basic" else 12000
 
@@ -626,11 +633,71 @@ async def earnings(authorization: Optional[str] = Header(None)):
 @api_router.get("/designer/feed")
 async def designer_feed(authorization: Optional[str] = Header(None)):
     user = await get_current_user(authorization)
+
     if user["role"] != "designer":
         raise HTTPException(status_code=403, detail="Designer only")
+
     referrals = await db.referrals.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
     consultations = await db.consultations.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
-    return {"referrals": referrals, "consultations": consultations}
+
+    for item in referrals + consultations:
+        unlock = await db.contact_unlocks.find_one({
+            "designer_id": user["user_id"],
+            "referral_id": item["referral_id"],
+            "status": "paid",
+        })
+
+        if unlock:
+            item["contact_unlocked"] = True
+        else:
+            phone = item.get("phone", "")
+            if len(phone) >= 3:
+                item["phone"] = f"XXXXXXX{phone[-3:]}"
+            else:
+                item["phone"] = "Hidden"
+
+            item["contact_unlocked"] = False
+
+    return {
+        "referrals": referrals,
+        "consultations": consultations,
+    }
+
+@api_router.post("/designer/unlock-contact")
+async def unlock_contact(
+    payload: UnlockContactIn,
+    authorization: Optional[str] = Header(None)
+):
+    user = await get_current_user(authorization)
+
+    if user["role"] != "designer":
+        raise HTTPException(status_code=403, detail="Designer only")
+
+    existing = await db.contact_unlocks.find_one({
+        "designer_id": user["user_id"],
+        "referral_id": payload.referral_id,
+        "status": "paid",
+    })
+
+    if existing:
+        return {
+            "ok": True,
+            "message": "Already unlocked"
+        }
+
+    await db.contact_unlocks.insert_one({
+        "unlock_id": f"unlock_{uuid.uuid4().hex[:12]}",
+        "designer_id": user["user_id"],
+        "referral_id": payload.referral_id,
+        "amount": 399,
+        "status": "paid",
+        "created_at": utcnow(),
+    })
+
+    return {
+        "ok": True,
+        "message": "Contact unlocked"
+    }
 
 
 @api_router.post("/designer/referral-action")
@@ -732,6 +799,7 @@ async def startup():
     await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)
     await db.referrals.create_index("referral_id", unique=True)
     await db.consultations.create_index("referral_id", unique=True)
+    await db.contact_unlocks.create_index("unlock_id", unique=True)
 
 
 @app.on_event("shutdown")

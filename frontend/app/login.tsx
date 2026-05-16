@@ -84,13 +84,9 @@ const handleGoogle = async () => {
       else router.replace("/designer");
     }
     else if (u.role === "client") {
-  if (res.is_new_user) {
-    router.replace("/karmic-payment");
-  } else {
-    router.replace("/single");
-  }
-}
-
+      router.replace("/single");
+    }
+    
   } catch (e: any) {
     Alert.alert("Login failed", e?.message || "Try again");
   } finally {
@@ -123,12 +119,12 @@ const handleGoogle = async () => {
               <View style={{ alignItems: "center" }}>
   <View style={styles.pill}>
     <Sparkle size={14} color="#B57B10" weight="fill" />
-    <Text style={styles.pillText}>X9 WORK LAB</Text>
+    <Text style={styles.pillText}>X9 worklab</Text>
   </View>
 
   <Text style={styles.welcome}>Welcome to</Text>
 
-  <Text style={styles.welcomeAccent}>X9 Work Lab</Text>
+  <Text style={styles.welcomeAccent}>X9 worklab</Text>
 
   <Text style={styles.subtitle}>
     Connect Associates, Designers & Clients in one trusted workspace.
@@ -173,7 +169,7 @@ const handleGoogle = async () => {
               </TouchableOpacity>
 
               <Text style={styles.note}>
-                By continuing, you agree to X9 WorkLab Terms & Privacy.
+                By continuing, you agree to X9 worklab Terms & Privacy.
               </Text>
             </View>
           </View>

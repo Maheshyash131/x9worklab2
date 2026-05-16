@@ -35,7 +35,7 @@ export default function DesignerPayment() {
   const isPremium = selectedPlan === "premium";
 
   const registrationFee = 4999;
-  const planFee = isPremium ? 11999 : 7999;
+  const planFee = isPremium ? 9999 : 5999;
   const total = registrationFee + planFee;
 
   const [agree, setAgree] = useState(false);

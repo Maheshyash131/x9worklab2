@@ -42,7 +42,9 @@ export default function Projects() {
     try {
       const data = await api("/designer/feed");
       setFeed(data);
-    } catch {}
+    } catch (err) {
+      console.log(err);
+    }
   }, []);
 
   useFocusEffect(
@@ -50,6 +52,12 @@ export default function Projects() {
       load();
     }, [load])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
 
   const acceptedProjects = [
     ...(feed.referrals || []).map((r) => ({
@@ -70,12 +78,6 @@ export default function Projects() {
         new Date(b.created_at).getTime() -
         new Date(a.created_at).getTime()
     );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
 
   return (
     <View style={{ flex: 1, paddingTop: 20 }}>
@@ -109,13 +111,13 @@ export default function Projects() {
                 </Text>
 
                 <Text style={styles.emptySub}>
-                  Accept a lead from Opportunities to begin working on projects.
+                  Accept a lead from Opportunities to begin working.
                 </Text>
               </View>
             ) : (
               acceptedProjects.map((project, i) => (
                 <TouchableOpacity
-                  key={i}
+                  key={project.referral_id}
                   activeOpacity={0.92}
                   style={styles.card}
                   onPress={() =>
@@ -129,9 +131,7 @@ export default function Projects() {
                   }
                 >
                   <Image
-                    source={{
-                      uri: IMGS[i % IMGS.length],
-                    }}
+                    source={{ uri: IMGS[i % IMGS.length] }}
                     style={styles.img}
                   />
 
@@ -149,25 +149,14 @@ export default function Projects() {
                       </Text>
                     </View>
 
-                    <View
-                      style={[
-                        styles.row,
-                        { marginTop: 5 },
-                      ]}
-                    >
+                    <View style={[styles.row, { marginTop: 5 }]}>
                       <MapPin size={14} color="#D88D07" />
                       <Text style={styles.meta}>
-                        {project.location ||
-                          "Location unavailable"}
+                        {project.location || "Location unavailable"}
                       </Text>
                     </View>
 
-                    <View
-                      style={[
-                        styles.row,
-                        { marginTop: 7 },
-                      ]}
-                    >
+                    <View style={[styles.row, { marginTop: 7 }]}>
                       <CalendarBlank
                         size={14}
                         color="#9A8E80"

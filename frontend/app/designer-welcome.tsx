@@ -172,7 +172,7 @@ export default function DesignerPortalIntro() {
                   <FloatingAvatar delay={800} left={44} />
                 </View>
 
-                <Text style={styles.communityCount}>500+ Designers</Text>
+                <Text style={styles.communityCount}>50+ Designers</Text>
                 <Text style={styles.communityJoined}>Already joined</Text>
               </View>
             </View>

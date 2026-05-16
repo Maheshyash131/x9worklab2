@@ -123,7 +123,7 @@ export default function ReferClientModal({
 
             <TouchableOpacity testID="m-submit" activeOpacity={0.9} disabled={busy} onPress={submit} style={styles.shadowBtn}>
               <LinearGradient colors={["#FFB931", "#E19100"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btnGrad}>
-                {busy ? <ActivityIndicator color="#fff" /> : (<><PaperPlaneTilt size={20} color="#fff" /><Text style={styles.btnText}>Push to Designer</Text></>)}
+                {busy ? <ActivityIndicator color="#fff" /> : (<><PaperPlaneTilt size={20} color="#fff" /><Text style={styles.btnText}>Move To Worklab</Text></>)}
               </LinearGradient>
             </TouchableOpacity>
           </ScrollView>

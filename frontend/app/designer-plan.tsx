@@ -65,7 +65,7 @@ export default function DesignerPlanSelection() {
         <Text style={styles.planTitle}>{title}</Text>
 
         <Text style={styles.price}>₹{price}</Text>
-        <Text style={styles.year}>/ Year</Text>
+        <Text style={styles.year}>/ month</Text>
 
         <View style={styles.divider} />
 
@@ -170,14 +170,14 @@ export default function DesignerPlanSelection() {
             <View style={styles.goldLine} />
 
             <Text style={styles.subHeading}>
-              Select the plan that best fits your business needs
+              Select the plan that's right for you.
             </Text>
 
             <View style={styles.planWrap}>
               <PlanCard
                 type="basic"
                 title="Basic Plan"
-                price="7,999"
+                price="5,999"
                 features={[
                   "Verified profile listing",
                   "Client inquiry access",
@@ -189,7 +189,7 @@ export default function DesignerPlanSelection() {
               <PlanCard
                 type="premium"
                 title="Premium Plan"
-                price="11,999"
+                price="9,999"
                 premium
                 features={[
                   "Priority profile visibility",

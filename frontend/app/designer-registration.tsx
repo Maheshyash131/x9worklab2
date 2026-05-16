@@ -24,6 +24,7 @@ import {
   IdentificationCard,
   ArrowRight,
 } from "phosphor-react-native";
+import { Picker } from "@react-native-picker/picker";
 
 import DashboardBackground from "../components/DashboardBackground";
 import { api } from "../lib/api";
@@ -70,7 +71,7 @@ export default function DesignerRegistration() {
     company_name: "",
     email: "",
     phone: "",
-    specialization: "",
+    role: "",
     experience: "",
     license_number: "",
   });
@@ -89,7 +90,7 @@ export default function DesignerRegistration() {
             prev.full_name ||
             prev.company_name ||
             prev.phone ||
-            prev.specialization ||
+            prev.role ||
             prev.experience ||
             prev.license_number
           ) {
@@ -101,7 +102,7 @@ export default function DesignerRegistration() {
             company_name: me?.company_name ?? "",
             email: me?.email ?? "",
             phone: me?.phone ?? "",
-            specialization: me?.specialization ?? "",
+            role: me?.role ?? "",
             experience: me?.experience ?? "",
             license_number: me?.license_number ?? "",
           };
@@ -124,7 +125,7 @@ export default function DesignerRegistration() {
         !form.full_name ||
         !form.company_name ||
         !form.phone ||
-        !form.specialization ||
+        !form.role ||
         !form.experience
       ) {
         Alert.alert("Missing", "Please complete all required fields.");
@@ -243,14 +244,23 @@ export default function DesignerRegistration() {
                 }
               />
 
-              <InputRow
-                icon={<Briefcase size={18} color="#D88D07" />}
-                placeholder="Select Specialization"
-                value={form.specialization}
-                onChangeText={(t: string) =>
-                  setForm((prev) => ({ ...prev, specialization: t }))
-                }
-              />
+             <View style={styles.dropdownRow}>
+  <View style={styles.iconWrap}>
+    <Briefcase size={18} color="#D88D07" />
+  </View>
+
+  <Picker
+    selectedValue={form.role}
+    onValueChange={(value) =>
+      setForm((prev) => ({ ...prev, role: value }))
+    }
+    style={styles.picker}
+  >
+    <Picker.Item label="Select role" value="" />
+    <Picker.Item label="Architect" value="architect" />
+    <Picker.Item label="Designer" value="designer" />
+  </Picker>
+</View>
 
               <InputRow
                 icon={<CalendarBlank size={18} color="#D88D07" />}
@@ -381,6 +391,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
+  dropdownRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 14,
+},
+
+
+
+
   stepBlock: {
     alignItems: "center",
     width: 90,
@@ -467,6 +486,12 @@ const styles = StyleSheet.create({
     color: "#1B1B1B",
   },
 
+  picker: {
+  flex: 1,
+  height: 60,
+  color: "#1B1B1B",
+},
+
   goldLine: {
     width: 28,
     height: 3,
@@ -489,7 +514,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF1DA",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: 8,
   },
 
   input: {

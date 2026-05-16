@@ -37,12 +37,12 @@ export default function RoleSelect() {
             <View style={{ alignItems: "center" }}>
   <View style={styles.pill}>
     <Sparkle size={12} color="#B57B10" weight="fill" />
-    <Text style={styles.pillText}>X9 WORK LAB</Text>
+    <Text style={styles.pillText}>X9 worklab</Text>
   </View>
 
   <Text style={styles.welcome}>Welcome to</Text>
 
-  <Text style={styles.welcomeAccent}>X9 Work Lab</Text>
+  <Text style={styles.welcomeAccent}>X9 worklab</Text>
 
   <Text style={styles.subtitle}>
     Connect Associates, Designers & Clients in one trusted workspace.
