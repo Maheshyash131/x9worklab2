@@ -349,34 +349,55 @@ async def recommended_designers(
 
 @api_router.post("/client/connect-designer")
 async def connect_designer(
-    payload: DesignerConnectIn,
-    authorization: Optional[str] = Header(None)
+    payload: dict,
+    authorization: Optional[str] = Header(None),
 ):
     user = await get_current_user(authorization)
 
     if user["role"] != "client":
-        raise HTTPException(status_code=403, detail="Client only")
+        raise HTTPException(
+            status_code=403,
+            detail="Client only",
+        )
 
-    doc = {
-        "referral_id": f"con_{uuid.uuid4().hex[:12]}",
+    designer = await db.users.find_one(
+        {
+            "user_id": payload["designer_id"],
+            "role": "designer",
+        },
+        {"_id": 0},
+    )
+
+    if not designer:
+        raise HTTPException(
+            status_code=404,
+            detail="Designer not found",
+        )
+
+    referral = {
+        "referral_id": str(uuid.uuid4()),
         "client_id": user["user_id"],
-        "designer_id": payload.designer_id,
-        "name": payload.full_name,
-        "phone": payload.phone,
-        "email": payload.email,
-        "location": payload.location,
-        "bhk": payload.bhk,
-        "budget": payload.budget,
-        "notes": payload.requirements,
-        "project_type": payload.project_type,
-        "status": "pending",
-        "source": "design_match",
+        "designer_id": payload["designer_id"],
+        "client_name": payload.get("full_name"),
+        "phone": payload.get("phone"),
+        "email": payload.get("email"),
+        "project_type": payload.get("project_type"),
+        "bhk": payload.get("bhk"),
+        "property_type": payload.get("property_type"),
+        "location": payload.get("location"),
+        "budget": payload.get("budget"),
+        "requirements": payload.get("requirements"),
+        "status": "accepted",
+        "contact_unlocked": True,
         "created_at": utcnow(),
     }
 
-    await db.consultations.insert_one(doc)
+    await db.referrals.insert_one(referral)
 
-    return {"ok": True}
+    return {
+        "ok": True,
+        "message": "Request sent successfully",
+    }
 
 @api_router.post("/client/karmic-consultation")
 async def create_karmic_consultation(
