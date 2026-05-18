@@ -61,7 +61,7 @@ export default function SingleLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Consult",
+          title: "Connect",
           tabBarIcon: ({ color, focused }) => (
             <Sparkle
               size={24}

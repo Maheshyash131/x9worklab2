@@ -1,508 +1,282 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
-  Alert,
+  Image,
   ActivityIndicator,
-  Dimensions,
-  Animated,
-  Pressable,
+  Alert,
 } from "react-native";
-import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 import {
-  ArrowLeft,
   ArrowRight,
-  CalendarBlank,
-  Clock,
-  MapPin,
-  User,
-  Phone,
-  EnvelopeSimple,
-  NotePencil,
-  Sparkle,
   ShieldCheck,
+  Headset,
   Star,
-  Lock,
+  Briefcase,
+  Crown,
 } from "phosphor-react-native";
-import DashboardBackground from "../../components/DashboardBackground"
-
+import ReferClientModal from "../../components/ReferClientModal";
+import DashboardBackground from "../../components/DashboardBackground";
 import { api } from "../../lib/api";
 
-const { width } = Dimensions.get("window");
-const CONSULTATION_FEE = 2999;
+export default function ClientDashboard() {
+  const [designers, setDesigners] = useState<any[]>([]);
+  const [me, setMe] = useState<any>(null);
+  const [busy, setBusy] = useState(true);
+  const [selectedDesigner, setSelectedDesigner] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-function PremiumInput({
-  icon,
-  placeholder,
-  value,
-  onChangeText,
-  multiline = false,
-}: {
-  icon: React.ReactNode;
-  placeholder: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  multiline?: boolean;
-}) {
-  const [focused, setFocused] = useState(false);
+  const load = useCallback(async () => {
+    try {
+      setBusy(true);
 
-  return (
-    <View
-      style={[
-        styles.inputContainer,
-        focused && styles.inputContainerFocused,
-        multiline && { alignItems: "flex-start" },
-      ]}
-    >
-      <View style={{ marginTop: multiline ? 16 : 0 }}>
-        {icon}
-      </View>
+      const [user, list] = await Promise.all([
+        api("/auth/me"),
+        api("/client/recommended-designers"),
+      ]);
 
-      <TextInput
-        style={[
-          styles.input,
-          multiline && styles.multilineInput,
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor="#A1A1AA"
-        value={value}
-        onChangeText={onChangeText}
-        multiline={multiline}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        autoCorrect={false}
-        blurOnSubmit={!multiline}
-      />
-    </View>
-  );
-}
+      setMe(user);
+      setDesigners(list);
 
-function FeatureCard({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <Pressable style={styles.featureCard}>
-      <View style={styles.featureIcon}>
-        {icon}
-      </View>
 
-      <Text style={styles.featureTitle}>
-        {title}
-      </Text>
-
-      <Text style={styles.featureSubtitle}>
-        {subtitle}
-      </Text>
-    </Pressable>
-  );
-}
-
-function StatTile({
-  icon,
-  title,
-}: {
-  icon: React.ReactNode;
-  title: string;
-}) {
-  return (
-    <View style={styles.statTile}>
-      {icon}
-      <Text style={styles.statText}>
-        {title}
-      </Text>
-    </View>
-  );
-}
-
-export default function KarmicPayment() {
-  const [busy, setBusy] = useState(false);
-
-  const [form, setForm] = useState({
-    dob: "",
-    time_birth: "",
-    place_birth: "",
-    full_name: "",
-    phone: "",
-    email: "",
-    concern: "",
-  });
-
-    const loadUser = async () => {
-  try {
-    const user = await api("/auth/me");
-
-    setForm((prev) => ({
-      ...prev,
-      full_name: prev.full_name || user?.name || "",
-      phone: prev.phone || user?.phone || "",
-      email: prev.email || user?.email || "",
-    }));
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-   useEffect(() => {
-  loadUser();
-}, []);
-
-      const proceedPayment = async () => {
-      if (!form.dob.trim()) {
-        Alert.alert("Required", "Enter date of birth");
-        return;
-      }
-
-      if (!form.time_birth.trim()) {
-        Alert.alert("Required", "Enter time of birth");
-        return;
-      }
-
-      if (!form.place_birth.trim()) {
-        Alert.alert("Required", "Enter place of birth");
-        return;
-      }
-
-      if (!form.full_name.trim()) {
-        Alert.alert("Required", "Enter full name");
-        return;
-      }
-
-      if (!form.phone.trim()) {
-        Alert.alert("Required", "Enter phone number");
-        return;
-      }
-
-      if (!form.email.trim()) {
-        Alert.alert("Required", "Enter email address");
-        return;
-      }
-
-      try {
-        setBusy(true);
-
-        await api("/client/karmic-consultation", {
-          method: "POST",
-          body: JSON.stringify({
-            dob: form.dob,
-            time_birth: form.time_birth,
-          place_birth: form.place_birth,
-          full_name: form.full_name,
-          phone: form.phone,
-          email: form.email,
-          concern: form.concern,
-          consultation_fee: CONSULTATION_FEE,
-        }),
-      });
-
-      Alert.alert(
-        "Booking Confirmed",
-        "Your karmic consultation has been booked successfully.",
-        [
-          {
-            text: "Continue",
-            onPress: () => router.replace("/single"),
-          },
-        ]
-      );
-    } catch (e: any) {
-      Alert.alert("Error", e?.message || "Something went wrong");
+    } catch (e) {
+      console.log(e);
     } finally {
       setBusy(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+ const openConnect = (designer: any) => {
+  setSelectedDesigner(designer);
+  setModalVisible(true);
+};
+
+
+  if (busy) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator
+          size="large"
+          color="#D88D07"
+        />
+      </View>
+    );
+  }
 
   return (
-   <View style={styles.root}>
-  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-    <DashboardBackground />
-  </View>
+    <View style={{ flex: 1 }}>
+      <DashboardBackground />
+
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
         >
           <View style={styles.container}>
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => router.back()}
-              >
-                <ArrowLeft size={22} color="#F97316" />
-              </TouchableOpacity>
-
-              <View style={styles.logoBadge}>
-                <Sparkle size={18} color="#fff" weight="fill" />
-              </View>
-            </View>
-
             <Text style={styles.heading}>
-              XNINE {"\n"}Karmic Lab
+              Design Match
             </Text>
 
-            <View style={styles.accentLine} />
-
-
-            <Text style={styles.description}>
-              Discover personalized karmic alignment,
-              energy balancing, and spiritual guidance
-              designed around your birth details.
+            <Text style={styles.sub}>
+              Get matched with premium interior designers
             </Text>
+
+            <View style={styles.accent} />
 
             <View style={styles.heroCard}>
-              <View style={styles.heroGlow} />
-
-              <Text style={styles.heroTitle}>
-                Premium Karmic Guidance
-              </Text>
-
-              <Text style={styles.heroDescription}>
-                Personalized spiritual consultation with
-                actionable remedies and energy alignment.
-              </Text>
-
-              {/* <TouchableOpacity style={styles.heroButton}>
-                <Text style={styles.heroButtonText}>
-                  Explore Benefits
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroTitle}>
+                  We recommend the best designers
                 </Text>
 
-                <ArrowRight
-                  size={18}
-                  color="#fff"
-                  weight="bold"
-                />
-              </TouchableOpacity> */}
+                <Text style={styles.heroText}>
+                  Share your style, space details and
+                  preferences. We'll match you with the
+                  perfect designer.
+                </Text>
+
+                <TouchableOpacity style={styles.heroBtn}>
+                  <Text style={styles.heroBtnText}>
+                    Get Started
+                  </Text>
+
+                  <ArrowRight
+                    size={16}
+                    color="#D88D07"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <Image
+                source={{
+                  uri: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80",
+                }}
+                style={styles.heroImage}
+              />
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featureRow}
-            >
-              <FeatureCard
-                icon={
-                  <Sparkle
-                    size={20}
-                    color="#F97316"
-                    weight="fill"
-                  />
-                }
-                title="Personalized Color Palette"
-                subtitle="Best colour for your living and space"
-              />
+            <Text style={styles.sectionTitle}>
+              Recommended Designers
+            </Text>
+                        {designers.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>
+                  No designers available right now
+                </Text>
+              </View>
+            ) : (
+              designers.map((designer, i) => (
+                <View
+                  key={designer.user_id || i}
+                  style={styles.designerCard}
+                >
+                  <View style={styles.topRow}>
+                    <View style={styles.profileWrap}>
+                      <Image
+                        source={{
+                          uri:
+                            designer.picture ||
+                            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
+                        }}
+                        style={styles.avatar}
+                      />
 
-              <FeatureCard
-                icon={
-                  <ShieldCheck
-                    size={20}
-                    color="#F97316"
-                    weight="fill"
-                  />
-                }
-                title="Expert Consulation"
-                subtitle="1-on-1 session with our karmic expert"
-              />
+                      {designer.plan === "premium" && (
+                        <View style={styles.premiumBadge}>
+                          <Crown
+                            size={12}
+                            color="#fff"
+                            weight="fill"
+                          />
+                        </View>
+                      )}
+                    </View>
 
-              <FeatureCard
-                icon={
-                  <Star
-                    size={20}
-                    color="#F97316"
-                    weight="fill"
-                  />
-                }
-                title="Remedies"
-                subtitle="Personalized solutions"
-              />
+                    <View style={{ flex: 1, marginLeft: 14 }}>
+                      <Text style={styles.designerName}>
+                        {designer.name}
+                      </Text>
 
-              <FeatureCard
-                icon={
-                  <Lock
-                    size={20}
-                    color="#F97316"
-                    weight="fill"
-                  />
-                }
-                title="Private"
-                subtitle="100% confidential"
-              />
-            </ScrollView>
+                      <Text style={styles.specialization}>
+                        {designer.specialization || "Interior Design"}
+                      </Text>
 
-            <View style={styles.formCard}>
-              <Text style={styles.formTitle}>
-                Book Your Session
-              </Text>
+                      <View style={styles.ratingRow}>
+                        <Star
+                          size={13}
+                          color="#D88D07"
+                          weight="fill"
+                        />
+                        <Text style={styles.ratingText}>
+                          {designer.rating || 4.8}
+                        </Text>
+                      </View>
 
-              <PremiumInput
-                icon={
-                  <CalendarBlank
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Date of Birth"
-                value={form.dob}
-                onChangeText={(v) =>
-                  setForm({ ...form, dob: v })
-                }
-              />
+                      <View style={styles.metaRow}>
+                        <View style={styles.metaChip}>
+                          <Briefcase
+                            size={12}
+                            color="#D88D07"
+                          />
+                          <Text style={styles.metaText}>
+                            {designer.completed_projects} Projects
+                          </Text>
+                        </View>
 
-              <PremiumInput
-                icon={
-                  <Clock
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Time of Birth"
-                value={form.time_birth}
-                onChangeText={(v) =>
-                  setForm({ ...form, time_birth: v })
-                }
-              />
+                        <View style={styles.metaChip}>
+                          <ShieldCheck
+                            size={12}
+                            color="#D88D07"
+                          />
+                          <Text style={styles.metaText}>
+                            {designer.experience || "0"} Years
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
 
-              <PremiumInput
-                icon={
-                  <MapPin
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Place of Birth"
-                value={form.place_birth}
-                onChangeText={(v) =>
-                  setForm({ ...form, place_birth: v })
-                }
-              />
-
-              <PremiumInput
-                icon={
-                  <User
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Full Name"
-                value={form.full_name}
-                onChangeText={(v) =>
-                  setForm({ ...form, full_name: v })
-                }
-              />
-
-              <PremiumInput
-                icon={
-                  <Phone
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Phone Number"
-                value={form.phone}
-                onChangeText={(v) =>
-                  setForm({ ...form, phone: v })
-                }
-              />
-
-              <PremiumInput
-                icon={
-                  <EnvelopeSimple
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Email Address"
-                value={form.email}
-                onChangeText={(v) =>
-                  setForm({ ...form, email: v })
-                }
-              />
-
-              <PremiumInput
-                icon={
-                  <NotePencil
-                    size={20}
-                    color="#71717A"
-                  />
-                }
-                placeholder="Specific Concern"
-                value={form.concern}
-                onChangeText={(v) =>
-                  setForm({ ...form, concern: v })
-                }
-                multiline
-              />
-               <View style={styles.priceCard}>
-  <View style={{ flex: 1, paddingRight: 10 }}>
-    <Text style={styles.priceLabel}>
-      Consultation Fee
-    </Text>
-
-    <Text style={styles.priceSub}>
-      One-time premium karmic session
-    </Text>
-  </View>
-
-  <Text style={styles.priceAmount}>
-    ₹2,999
-  </Text>
-</View>
-              <TouchableOpacity
-                style={[
-                  styles.payButton,
-                  busy && { opacity: 0.7 },
-                ]}
-                onPress={proceedPayment}
-                disabled={busy}
-                activeOpacity={0.9}
-              >
-                {busy ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <Text style={styles.payButtonText}>
-                      Proceed To Payment
+                  <TouchableOpacity
+                    style={styles.connectBtn}
+                    onPress={() => openConnect(designer)}
+                  >
+                    <Text style={styles.connectText}>
+                      Connect
                     </Text>
 
-                    <View style={styles.payArrow}>
-                      <ArrowRight
-                        size={18}
-                        color="#fff"
-                        weight="bold"
-                      />
-                    </View>
-                  </>
-                )}
-              </TouchableOpacity>
+                    <ArrowRight
+                      size={16}
+                      color="#fff"
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
 
-              <Text style={styles.secureText}>
-                Secure encrypted booking
-              </Text>
-            </View>
+            <Text style={styles.sectionTitle}>
+              Why Choose Design Match?
+            </Text>
 
-            <View style={styles.statsRow}>
-              <StatTile
-                icon={<Sparkle size={18} color="#F97316" weight="fill" />}
+            <View style={styles.whyRow}>
+              <WhyCard
+                icon={
+                  <ShieldCheck
+                    size={22}
+                    color="#D88D07"
+                  />
+                }
+                title="Trusted"
+              />
+
+              <WhyCard
+                icon={
+                  <Star
+                    size={22}
+                    color="#D88D07"
+                    weight="fill"
+                  />
+                }
                 title="Personalized"
               />
-              <StatTile
-                icon={<ShieldCheck size={18} color="#F97316" weight="fill" />}
-                title="Expert Guided"
-              />
-              <StatTile
-                icon={<Lock size={18} color="#F97316" weight="fill" />}
-                title="Secure"
+
+              <WhyCard
+                icon={
+                  <Headset
+                    size={22}
+                    color="#D88D07"
+                  />
+                }
+                title="Support"
               />
             </View>
+                <ReferClientModal
+  visible={modalVisible}
+  designer={selectedDesigner}
+  client={me}
+  onClose={() => {
+    setModalVisible(false);
+    setSelectedDesigner(null);
+  }}
+  onSuccess={() => {
+    setModalVisible(false);
+    setSelectedDesigner(null);
+
+    Alert.alert(
+      "Request Sent",
+      "Designer has received your request."
+    );
+  }}
+/>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -510,294 +284,294 @@ export default function KarmicPayment() {
   );
 }
 
+function WhyCard({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <View style={styles.whyCard}>
+      {icon}
+      <Text style={styles.whyText}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: {
+  loader: {
     flex: 1,
-    backgroundColor: "#FFF8F1",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FAF7F2",
   },
 
   container: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 3,
-  },
-
-  accentLine: {
-  width: 60,
-  height: 4,
-  backgroundColor: "#D9A23A",
-  borderRadius: 4,
-  marginTop: 14,
-  margin:"auto",
-},
-
-  logoBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F97316",
-    justifyContent: "center",
-    alignItems: "center",
+    paddingTop: 18,
   },
 
   heading: {
-    fontSize: 42,
+    fontSize: 40,
     fontWeight: "800",
-    fontFamily: "PlayfairDisplay-Bold",
-    color: "#111827",
-    marginTop: 24,
-    textAlign: "center",
+    color: "#111",
+    lineHeight: 44,
   },
 
-  subHeading: {
-    fontSize: 28,
-    fontWeight: "300",
-    color: "#111827",
+  sub: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#6D655B",
   },
 
-  description: {
-    marginTop: 14,
-    fontSize: 15,
-    lineHeight: 24,
-    color: "#6B7280",
+  accent: {
+    width: 58,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: "#D88D07",
+    marginTop: 12,
   },
 
   heroCard: {
-    marginTop: 26,
-    borderRadius: 28,
-    padding: 24,
-    backgroundColor: "#F97316",
-    overflow: "hidden",
-    position: "relative",
-  },
-
-  heroGlow: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    top: -50,
-    right: -30,
+    marginTop: 20,
+    backgroundColor: "#D88D07",
+    borderRadius: 24,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   heroTitle: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "800",
   },
 
-  heroDescription: {
-    marginTop: 12,
-    color: "#fff",
-    lineHeight: 22,
-    fontSize: 14,
+  heroText: {
+    color: "#FFF6D8",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
   },
 
-  heroButton: {
-    marginTop: 18,
-    alignSelf: "flex-start",
+  heroBtn: {
+    marginTop: 14,
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    alignSelf: "flex-start",
+  },
+
+  heroBtnText: {
+    color: "#D88D07",
+    fontWeight: "800",
+    marginRight: 8,
+  },
+
+  heroImage: {
+    width: 100,
+    height: 100,
     borderRadius: 18,
+    marginLeft: 12,
   },
 
-  heroButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 14,
+  sectionTitle: {
+    marginTop: 24,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#111",
   },
 
-  featureRow: {
-    paddingTop: 20,
-    paddingBottom: 8,
-    paddingRight: 10,
-  },
-
-  featureCard: {
-    width: width * 0.42,
-    backgroundColor: "#fff",
+  emptyCard: {
+    marginTop: 20,
+    padding: 30,
     borderRadius: 22,
-    padding: 18,
-    marginRight: 14,
+    backgroundColor: "#FFFDF8",
+    alignItems: "center",
+  },
+
+  emptyText: {
+    color: "#7A7167",
+  },
+
+  designerCard: {
+    marginTop: 16,
+    backgroundColor: "#FFFDF8",
+    borderRadius: 24,
+    padding: 16,
+    shadowColor: "#B89B63",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
 
-  featureIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFF4E6",
+  topRow: {
+    flexDirection: "row",
+  },
+
+  profileWrap: {
+    position: "relative",
+  },
+
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+
+  premiumBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#D88D07",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  featureTitle: {
-    marginTop: 14,
-    fontSize: 15,
+  designerName: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#111",
+  },
+
+  specialization: {
+    color: "#6D655B",
+    marginTop: 4,
+  },
+
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+
+  ratingText: {
+    marginLeft: 6,
+    color: "#111",
     fontWeight: "700",
-    color: "#111827",
   },
 
-  featureSubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#6B7280",
+  metaRow: {
+    flexDirection: "row",
+    marginTop: 10,
+    flexWrap: "wrap",
   },
 
-  formCard: {
-    backgroundColor: "#fff",
-    borderRadius: 28,
-    padding: 20,
-    marginTop: 18,
-    elevation: 4,
-  },
-
-  formTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 18,
-  },
-
-  inputContainer: {
+  metaChip: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#F3E2D2",
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    marginBottom: 14,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFF3D9",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginRight: 8,
+    marginBottom: 8,
   },
 
-  inputContainerFocused: {
-  borderColor: "#F97316",
-  backgroundColor: "#FFFDF9",
-},
-
-multilineInput: {
-  minHeight: 100,
-  textAlignVertical: "top",
-  paddingTop: 16,
-},
-
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingLeft: 12,
-    fontSize: 15,
-    color: "#111827",
+  metaText: {
+    marginLeft: 6,
+    fontSize: 11,
+    color: "#5A4E3B",
+    fontWeight: "700",
   },
 
- priceCard: {
-  marginTop: 8,
-  borderRadius: 20,
-  padding: 18,
-  backgroundColor: "#FFF7ED",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: 10,
-},
-
-priceLabel: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: "#111827",
-},
-
-priceSub: {
-  marginTop: 4,
-  fontSize: 12,
-  color: "#6B7280",
-  lineHeight: 18,
-  maxWidth: width * 0.45,
-},
-
-priceAmount: {
-  fontSize: 26,
-  fontWeight: "900",
-  color: "#F97316",
-  flexShrink: 1,
-},
-
-  payButton: {
-    height: 62,
-    borderRadius: 20,
-    backgroundColor: "#F97316",
-    marginTop: 18,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  payButtonText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "800",
-    marginRight: 12,
-  },
-
-  payArrow: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  secureText: {
+  connectBtn: {
     marginTop: 14,
-    textAlign: "center",
-    color: "#6B7280",
-    fontSize: 13,
+    backgroundColor: "#D88D07",
+    borderRadius: 16,
+    paddingVertical: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
   },
 
-  statsRow: {
+  connectText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "800",
+    marginRight: 8,
+  },
+
+  whyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 18,
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 40,
   },
 
-  statTile: {
+  whyCard: {
     flex: 1,
+    backgroundColor: "#FFFDF8",
+    borderRadius: 18,
+    paddingVertical: 18,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+
+  whyText: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#444",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+
+  modalCard: {
     backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 22,
+  },
+
+  modalHead: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111",
+  },
+
+  input: {
+    backgroundColor: "#FFF8EA",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginBottom: 12,
+    fontSize: 14,
+    color: "#111",
+  },
+
+  submitBtn: {
+    backgroundColor: "#D88D07",
     borderRadius: 18,
     paddingVertical: 16,
     alignItems: "center",
-    marginHorizontal: 4,
-    elevation: 2,
+    marginTop: 8,
   },
 
-  statText: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#374151",
-    textAlign: "center",
+  submitText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 15,
   },
 });
