@@ -7,8 +7,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Modal,
-  TextInput,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,9 +18,8 @@ import {
   Star,
   Briefcase,
   Crown,
-  X,
 } from "phosphor-react-native";
-
+import ReferClientModal from "../../components/ReferClientModal";
 import DashboardBackground from "../../components/DashboardBackground";
 import { api } from "../../lib/api";
 
@@ -32,24 +29,6 @@ export default function ClientDashboard() {
   const [busy, setBusy] = useState(true);
   const [selectedDesigner, setSelectedDesigner] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [sending, setSending] = useState(false);
-
-const [form, setForm] = useState({
-  full_name: "",
-  phone: "",
-  email: "",
-  occupation: "",
-  company: "",
-  pan: "",
-  project_type: "",
-  bhk: "",
-  property_type: "",
-  location: "",
-  budget: "",
-  preferred_style: "",
-  timeline: "",
-  requirements: "",
-});
 
   const load = useCallback(async () => {
     try {
@@ -63,16 +42,7 @@ const [form, setForm] = useState({
       setMe(user);
       setDesigners(list);
 
-    setForm((prev) => ({
-  ...prev,
-  full_name: user?.name || "",
-  phone: user?.phone || "",
-  email: user?.email || "",
-  location: user?.location || "",
-  occupation: user?.occupation || "",
-  company: user?.company || "",
-  pan: user?.pan || "",
-}));
+
     } catch (e) {
       console.log(e);
     } finally {
@@ -86,70 +56,11 @@ const [form, setForm] = useState({
     }, [load])
   );
 
-  const openConnect = (designer: any) => {
-    setSelectedDesigner(designer);
-    setModalVisible(true);
-  };
+ const openConnect = (designer: any) => {
+  setSelectedDesigner(designer);
+  setModalVisible(true);
+};
 
-  const sendRequest = async () => {
-    if (!selectedDesigner) return;
-
-    if (!form.full_name.trim()) {
-      Alert.alert("Required", "Enter full name");
-      return;
-    }
-
-    if (!form.phone.trim()) {
-      Alert.alert("Required", "Enter phone");
-      return;
-    }
-
-    if (!form.project_type.trim()) {
-      Alert.alert("Required", "Enter project type");
-      return;
-    }
-
-    if (!form.email.trim()) {
-  Alert.alert("Required", "Enter email");
-  return;
-}
-
-if (!form.location.trim()) {
-  Alert.alert("Required", "Enter location");
-  return;
-}
-
-if (!form.budget.trim()) {
-  Alert.alert("Required", "Enter budget");
-  return;
-}
-
-    try {
-      setSending(true);
-
-      await api("/client/connect-designer", {
-        method: "POST",
-        body: JSON.stringify({
-          designer_id: selectedDesigner.user_id,
-          ...form,
-        }),
-      });
-
-      setModalVisible(false);
-
-      Alert.alert(
-        "Request Sent",
-        "Designer has received your request."
-      );
-    } catch (e: any) {
-      Alert.alert(
-        "Error",
-        e?.message || "Failed to send request"
-      );
-    } finally {
-      setSending(false);
-    }
-  };
 
   if (busy) {
     return (
@@ -348,160 +259,24 @@ if (!form.budget.trim()) {
                 title="Support"
               />
             </View>
+                <ReferClientModal
+  visible={modalVisible}
+  designer={selectedDesigner}
+  client={me}
+  onClose={() => {
+    setModalVisible(false);
+    setSelectedDesigner(null);
+  }}
+  onSuccess={() => {
+    setModalVisible(false);
+    setSelectedDesigner(null);
 
-            <Modal
-              visible={modalVisible}
-              animationType="slide"
-              transparent
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalCard}>
-                  <View style={styles.modalHead}>
-                    <Text style={styles.modalTitle}>
-                      Connect Designer
-                    </Text>
-
-                    <TouchableOpacity
-                      onPress={() =>
-                        setModalVisible(false)
-                      }
-                    >
-                      <X
-                        size={22}
-                        color="#1B1B1B"
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <InputField
-  placeholder="Full Name"
-  value={form.full_name}
-  onChange={(t) =>
-    setForm({ ...form, full_name: t })
-  }
+    Alert.alert(
+      "Request Sent",
+      "Designer has received your request."
+    );
+  }}
 />
-
-<InputField
-  placeholder="Phone Number"
-  value={form.phone}
-  onChange={(t) =>
-    setForm({ ...form, phone: t })
-  }
-/>
-
-<InputField
-  placeholder="Email Address"
-  value={form.email}
-  onChange={(t) =>
-    setForm({ ...form, email: t })
-  }
-/>
-
-<InputField
-  placeholder="Occupation"
-  value={form.occupation}
-  onChange={(t) =>
-    setForm({ ...form, occupation: t })
-  }
-/>
-
-<InputField
-  placeholder="Company Name"
-  value={form.company}
-  onChange={(t) =>
-    setForm({ ...form, company: t })
-  }
-/>
-
-<InputField
-  placeholder="PAN Number"
-  value={form.pan}
-  onChange={(t) =>
-    setForm({ ...form, pan: t })
-  }
-/>
-
-<InputField
-  placeholder="Project Type"
-  value={form.project_type}
-  onChange={(t) =>
-    setForm({ ...form, project_type: t })
-  }
-/>
-
-<InputField
-  placeholder="BHK"
-  value={form.bhk}
-  onChange={(t) =>
-    setForm({ ...form, bhk: t })
-  }
-/>
-
-<InputField
-  placeholder="Property Type (Apartment/Villa/etc)"
-  value={form.property_type}
-  onChange={(t) =>
-    setForm({ ...form, property_type: t })
-  }
-/>
-
-<InputField
-  placeholder="Location"
-  value={form.location}
-  onChange={(t) =>
-    setForm({ ...form, location: t })
-  }
-/>
-
-<InputField
-  placeholder="Budget"
-  value={form.budget}
-  onChange={(t) =>
-    setForm({ ...form, budget: t })
-  }
-/>
-
-<InputField
-  placeholder="Preferred Design Style"
-  value={form.preferred_style}
-  onChange={(t) =>
-    setForm({ ...form, preferred_style: t })
-  }
-/>
-
-<InputField
-  placeholder="Expected Timeline"
-  value={form.timeline}
-  onChange={(t) =>
-    setForm({ ...form, timeline: t })
-  }
-/>
-
-<InputField
-  placeholder="Detailed Requirements"
-  value={form.requirements}
-  onChange={(t) =>
-    setForm({ ...form, requirements: t })
-  }
-  multiline
-/>  
-
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    onPress={sendRequest}
-                    disabled={sending}
-                  >
-                    {sending ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.submitText}>
-                        Send Request
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -526,34 +301,6 @@ function WhyCard({
   );
 }
 
-function InputField({
-  placeholder,
-  value,
-  onChange,
-  multiline,
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (t: string) => void;
-  multiline?: boolean;
-}) {
-  return (
-    <TextInput
-      style={[
-        styles.input,
-        multiline && {
-          minHeight: 100,
-          textAlignVertical: "top",
-        },
-      ]}
-      placeholder={placeholder}
-      placeholderTextColor="#9E8E76"
-      value={value}
-      onChangeText={onChange}
-      multiline={multiline}
-    />
-  );
-}
 const styles = StyleSheet.create({
   loader: {
     flex: 1,

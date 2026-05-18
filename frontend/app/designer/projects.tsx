@@ -60,19 +60,23 @@ export default function Projects() {
   };
 
   const acceptedProjects = [
-    ...(feed.referrals || []).map((r) => ({
-      ...r,
-      _name: r.client_name,
-      type: "referral",
-    })),
+  ...(feed.referrals || []).map((r) => ({
+    ...r,
+    _name: r.client_name,
+    type: "referral",
+  })),
 
-    ...(feed.consultations || []).map((c) => ({
-      ...c,
-      _name: c.name,
-      type: "consultation",
-    })),
-  ]
-    .filter((item) => item.status === "accepted")
+  ...(feed.consultations || []).map((c) => ({
+    ...c,
+    _name: c.name,
+    type: "consultation",
+  })),
+]
+  .filter(
+    (item) =>
+      item.status === "accepted" &&
+      item.designer_id
+  )
     .sort(
       (a, b) =>
         new Date(b.created_at).getTime() -

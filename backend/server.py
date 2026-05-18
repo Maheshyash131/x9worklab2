@@ -637,12 +637,31 @@ async def designer_feed(authorization: Optional[str] = Header(None)):
     if user["role"] != "designer":
         raise HTTPException(status_code=403, detail="Designer only")
 
-    referrals = await db.referrals.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
-    consultations = await db.consultations.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    designer_id = user["user_id"]
+
+    referrals = await db.referrals.find(
+        {
+            "$or": [
+                {"status": "pending", "designer_id": None},
+                {"status": "accepted", "designer_id": designer_id},
+            ]
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(500)
+
+    consultations = await db.consultations.find(
+        {
+            "$or": [
+                {"status": "pending", "designer_id": None},
+                {"status": "accepted", "designer_id": designer_id},
+            ]
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(500)
 
     for item in referrals + consultations:
         unlock = await db.contact_unlocks.find_one({
-            "designer_id": user["user_id"],
+            "designer_id": designer_id,
             "referral_id": item["referral_id"],
             "status": "paid",
         })
@@ -701,26 +720,93 @@ async def unlock_contact(
 
 
 @api_router.post("/designer/referral-action")
-async def referral_action(payload: ReferralActionIn, authorization: Optional[str] = Header(None)):
+async def referral_action(
+    payload: ReferralActionIn,
+    authorization: Optional[str] = Header(None),
+):
     user = await get_current_user(authorization)
+
     if user["role"] != "designer":
         raise HTTPException(status_code=403, detail="Designer only")
+
     if payload.action not in {"accept", "reject"}:
         raise HTTPException(status_code=400, detail="Invalid action")
-    new_status = "accepted" if payload.action == "accept" else "rejected"
-    res = await db.referrals.update_one(
+
+    designer_id = user["user_id"]
+
+    referral = await db.referrals.find_one(
         {"referral_id": payload.referral_id},
-        {"$set": {"status": new_status, "designer_id": user["user_id"]}},
+        {"_id": 0},
     )
-    if res.matched_count == 0:
-        # maybe a consultation
-        res2 = await db.consultations.update_one(
+
+    if referral:
+        if payload.action == "accept":
+            if referral["status"] == "accepted" and referral.get("designer_id") != designer_id:
+                raise HTTPException(status_code=400, detail="Already accepted by another designer")
+
+            await db.referrals.update_one(
+                {"referral_id": payload.referral_id},
+                {
+                    "$set": {
+                        "status": "accepted",
+                        "designer_id": designer_id,
+                        "accepted_at": utcnow(),
+                    }
+                },
+            )
+            return {"ok": True, "status": "accepted"}
+
+        await db.referrals.update_one(
             {"referral_id": payload.referral_id},
-            {"$set": {"status": new_status, "designer_id": user["user_id"]}},
+            {
+                "$set": {
+                    "status": "pending",
+                    "designer_id": None,
+                },
+                "$unset": {
+                    "accepted_at": "",
+                },
+            },
         )
-        if res2.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Referral not found")
-    return {"ok": True, "status": new_status}
+        return {"ok": True, "status": "pending"}
+
+    consultation = await db.consultations.find_one(
+        {"referral_id": payload.referral_id},
+        {"_id": 0},
+    )
+
+    if consultation:
+        if payload.action == "accept":
+            if consultation["status"] == "accepted" and consultation.get("designer_id") != designer_id:
+                raise HTTPException(status_code=400, detail="Already accepted by another designer")
+
+            await db.consultations.update_one(
+                {"referral_id": payload.referral_id},
+                {
+                    "$set": {
+                        "status": "accepted",
+                        "designer_id": designer_id,
+                        "accepted_at": utcnow(),
+                    }
+                },
+            )
+            return {"ok": True, "status": "accepted"}
+
+        await db.consultations.update_one(
+            {"referral_id": payload.referral_id},
+            {
+                "$set": {
+                    "status": "pending",
+                    "designer_id": None,
+                },
+                "$unset": {
+                    "accepted_at": "",
+                },
+            },
+        )
+        return {"ok": True, "status": "pending"}
+
+    raise HTTPException(status_code=404, detail="Lead not found")
 
 
 # ---------- Client: Consultation ----------
