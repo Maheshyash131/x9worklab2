@@ -349,7 +349,7 @@ async def recommended_designers(
 
 @api_router.post("/client/connect-designer")
 async def connect_designer(
-    payload: dict,
+    payload: DesignerConnectIn,
     authorization: Optional[str] = Header(None),
 ):
     user = await get_current_user(authorization)
@@ -362,7 +362,7 @@ async def connect_designer(
 
     designer = await db.users.find_one(
         {
-            "user_id": payload["designer_id"],
+            "user_id": payload.designer_id,
             "role": "designer",
         },
         {"_id": 0},
@@ -375,20 +375,19 @@ async def connect_designer(
         )
 
     referral = {
-        "referral_id": str(uuid.uuid4()),
+        "referral_id": f"ref_{uuid.uuid4().hex[:12]}",
         "client_id": user["user_id"],
-        "designer_id": payload["designer_id"],
-        "client_name": payload.get("full_name"),
-        "phone": payload.get("phone"),
-        "email": payload.get("email"),
-        "project_type": payload.get("project_type"),
-        "bhk": payload.get("bhk"),
-        "property_type": payload.get("property_type"),
-        "location": payload.get("location"),
-        "budget": payload.get("budget"),
-        "requirements": payload.get("requirements"),
+        "client_name": payload.full_name,
+        "phone": payload.phone,
+        "email": payload.email,
+        "location": payload.location,
+        "bhk": payload.bhk or payload.project_type or "Interior Project",
+        "property_name": payload.project_type or "Client Project",
+        "ownership": "Own",
+        "notes": payload.requirements or "",
         "status": "accepted",
-        "contact_unlocked": True,
+        "designer_id": payload.designer_id,
+        "source": "client",
         "created_at": utcnow(),
     }
 
