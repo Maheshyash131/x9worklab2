@@ -101,16 +101,29 @@ export default function ReferClientModal({
     try {
       setBusy(true);
 
-      await api("/client/connect-designer", {
-        method: "POST",
-        body: JSON.stringify({
-          designer_id: designer.user_id,
-          ...form,
-        }),
-      });
+      const payload = {
+  designer_id: designer?.user_id || "",
+  full_name: form.full_name.trim(),
+  phone: form.phone.trim(),
+  email: form.email?.trim() || "",
+  project_type: form.project_type.trim(),
+  bhk: form.bhk || "2BHK",
+  location: form.location.trim(),
+  budget: form.budget.trim(),
+  requirements: form.requirements?.trim() || "",
+};
 
-      onSuccess?.();
-      onClose();
+console.log("PUSH PAYLOAD:", payload);
+
+await api("/client/connect-designer", {
+  method: "POST",
+  body: JSON.stringify(payload),
+});
+
+Alert.alert("Success", "Lead pushed successfully");
+
+onSuccess?.();
+onClose();
     } catch (e: any) {
       Alert.alert(
         "Error",
@@ -241,7 +254,7 @@ export default function ReferClientModal({
                       color="#fff"
                     />
                     <Text style={styles.btnText}>
-                      Send Request
+                      Push To Worklab
                     </Text>
                   </>
                 )}

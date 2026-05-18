@@ -352,12 +352,22 @@ async def connect_designer(
     payload: DesignerConnectIn,
     authorization: Optional[str] = Header(None),
 ):
+    print("CONNECT DESIGNER PAYLOAD:", payload.dict())
+
     user = await get_current_user(authorization)
 
+    # allow only client
     if user["role"] != "client":
         raise HTTPException(
             status_code=403,
-            detail="Client only",
+            detail=f"Client only. Current role: {user['role']}",
+        )
+
+    # validate designer id
+    if not payload.designer_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Designer ID missing",
         )
 
     designer = await db.users.find_one(
@@ -371,31 +381,32 @@ async def connect_designer(
     if not designer:
         raise HTTPException(
             status_code=404,
-            detail="Designer not found",
+            detail=f"Designer not found: {payload.designer_id}",
         )
 
     referral = {
         "referral_id": f"ref_{uuid.uuid4().hex[:12]}",
         "client_id": user["user_id"],
-        "client_name": payload.full_name,
-        "phone": payload.phone,
-        "email": payload.email,
-        "location": payload.location,
-        "bhk": payload.bhk or payload.project_type or "Interior Project",
-        "property_name": payload.project_type or "Client Project",
+        "client_name": payload.full_name.strip(),
+        "phone": payload.phone.strip(),
+        "email": payload.email.strip() if payload.email else "",
+        "location": payload.location.strip(),
+        "bhk": payload.bhk if payload.bhk else "2BHK",
+        "property_name": payload.project_type.strip() if payload.project_type else "Client Project",
         "ownership": "Own",
-        "notes": payload.requirements or "",
+        "notes": payload.requirements.strip() if payload.requirements else "",
         "status": "accepted",
         "designer_id": payload.designer_id,
         "source": "client",
         "created_at": utcnow(),
     }
 
-    await db.referrals.insert_one(referral)
+    result = await db.referrals.insert_one(referral)
 
     return {
         "ok": True,
-        "message": "Request sent successfully",
+        "inserted_id": str(result.inserted_id),
+        "message": "Lead pushed to WorkLab successfully",
     }
 
 @api_router.post("/client/karmic-consultation")
